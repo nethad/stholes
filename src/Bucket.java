@@ -1,5 +1,6 @@
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Bucket {
@@ -7,10 +8,11 @@ public class Bucket {
     private int frequency;
     // private double x0, x1, y0, y1;
     private final Rectangle2D.Double box;
-    private List<Bucket> children;
+    private final List<Bucket> children;
 
     public Bucket(double x0, double x1, double y0, double y1) {
         box = new Rectangle2D.Double(x0, y0, x1 - x0, y1 - y0);
+        children = new LinkedList<Bucket>();
     }
 
     /**
@@ -53,13 +55,8 @@ public class Bucket {
         }
     }
 
-    private double getIntersectionVolume(Query query) {
-        Rectangle2D.Double intersection = (Rectangle2D.Double) query.getRectangle2D().createIntersection(box);
-        return volumeForRectangle(intersection);
-    }
-
-    private boolean queryIsInRange(Query query) {
-        return box.intersects(query.getRectangle2D());
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
     }
 
     public void addChildBucket(Bucket childBucket) {
@@ -70,8 +67,17 @@ public class Bucket {
         children.remove(childBucket);
     }
 
+    private double getIntersectionVolume(Query query) {
+        Rectangle2D.Double intersection = (Rectangle2D.Double) query.getRectangle2D().createIntersection(box);
+        return volumeForRectangle(intersection);
+    }
+
     private double volumeForRectangle(Rectangle2D.Double box) {
         return box.getWidth() * box.getHeight();
+    }
+
+    private boolean queryIsInRange(Query query) {
+        return box.intersects(query.getRectangle2D());
     }
 
 }

@@ -2,7 +2,14 @@ import java.awt.geom.Rectangle2D;
 
 public class Query {
 
-    private double xMin, xMax, yMin, yMax;
+    private final double xMin, xMax, yMin, yMax;
+
+    public Query(double xMin, double xMax, double yMin, double yMax) {
+        this.xMin = xMin;
+        this.xMax = xMax;
+        this.yMin = yMin;
+        this.yMax = xMax;
+    }
 
     @Override
     public String toString() {
