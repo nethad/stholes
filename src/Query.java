@@ -20,4 +20,20 @@ public class Query {
 	public Rectangle2D.Double getRectangle2D() {
 		return new Rectangle2D.Double(xMin, yMin, xMax - xMin, yMax - yMin);
 	}
+
+	public double getXMin() {
+		return xMin;
+	}
+
+	public double getXMax() {
+		return xMax;
+	}
+
+	public double getYMin() {
+		return yMin;
+	}
+
+	public double getYMax() {
+		return yMax;
+	}
 }
