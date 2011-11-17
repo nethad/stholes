@@ -1,3 +1,4 @@
+package ch.uzh.ifi.dbimpl.stholes.data;
 import java.awt.geom.Rectangle2D;
 import java.util.LinkedList;
 import java.util.List;

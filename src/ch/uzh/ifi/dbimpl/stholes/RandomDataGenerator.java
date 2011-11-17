@@ -1,3 +1,4 @@
+package ch.uzh.ifi.dbimpl.stholes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,7 +11,7 @@ public class RandomDataGenerator {
 	private static final String USERNAME = "SA";
 	private static final String PASSWORD = "";
 	private static final String TABLE_NAME = "test";
-	private static final int NUMBER_OF_DATAPOINTS = 1000;
+	private static final int NUMBER_OF_DATAPOINTS = 10000;
 	private Connection connection;
 
 	// private PreparedStatement selectStatement;

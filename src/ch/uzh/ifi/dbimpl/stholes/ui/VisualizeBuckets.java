@@ -1,12 +1,18 @@
+package ch.uzh.ifi.dbimpl.stholes.ui;
+
 import java.awt.GridLayout;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import ch.uzh.ifi.dbimpl.stholes.HistorgramFactory;
+import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
+
 public class VisualizeBuckets {
 
 	private JFrame frame;
-	private Canvas canvas;
+	private BucketCanvas canvas;
 
 	public VisualizeBuckets() {
 		initializeGui();
@@ -20,7 +26,7 @@ public class VisualizeBuckets {
 		this.frame.setTitle("STHoles");
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout(1, 1));
-		canvas = new Canvas();
+		canvas = new BucketCanvas();
 		mainPanel.add(canvas);
 		this.frame.add(mainPanel);
 		this.frame.setVisible(true);

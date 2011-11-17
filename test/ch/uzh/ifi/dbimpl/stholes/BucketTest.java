@@ -1,7 +1,11 @@
+package ch.uzh.ifi.dbimpl.stholes;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
+
+import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 /**
  * Test the histogram volume and estimate functions.

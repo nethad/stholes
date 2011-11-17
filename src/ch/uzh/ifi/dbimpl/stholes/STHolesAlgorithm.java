@@ -1,8 +1,12 @@
+package ch.uzh.ifi.dbimpl.stholes;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 public class STHolesAlgorithm {
 

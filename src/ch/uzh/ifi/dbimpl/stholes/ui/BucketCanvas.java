@@ -1,3 +1,5 @@
+package ch.uzh.ifi.dbimpl.stholes.ui;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
@@ -7,7 +9,10 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-public class Canvas extends JComponent {
+import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
+
+public class BucketCanvas extends JComponent {
 
 	/**
 	 * 

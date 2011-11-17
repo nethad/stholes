@@ -1,3 +1,7 @@
+package ch.uzh.ifi.dbimpl.stholes;
+import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
+
 
 public class HistorgramFactory {
 
