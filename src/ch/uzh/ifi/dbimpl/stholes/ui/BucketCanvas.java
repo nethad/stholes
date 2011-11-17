@@ -74,10 +74,12 @@ public class BucketCanvas extends JComponent {
 						.getFrequency()));
 		this.rectangles.add(drawableRectangle);
 		addRectangles(bucket.getChildren());
+		repaint();
 	}
 
 	public void setQuery(Query query) {
 		this.query = query;
+		repaint();
 	}
 
 	private void addRectangles(List<Bucket> buckets) {

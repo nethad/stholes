@@ -41,6 +41,7 @@ public class DataCanvas extends JComponent {
 		for (Point2D.Double dataPoint : oDataPoints) {
 			this.dataPoints.add(scalePoint(dataPoint));
 		}
+		repaint();
 	}
 
 	private Point scalePoint(Point2D.Double dataPoint) {
