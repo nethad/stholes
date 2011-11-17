@@ -8,7 +8,7 @@ public class Query {
 		this.xMin = xMin;
 		this.xMax = xMax;
 		this.yMin = yMin;
-		this.yMax = xMax;
+		this.yMax = yMax;
 	}
 
 	@Override

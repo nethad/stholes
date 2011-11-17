@@ -10,7 +10,7 @@ public class Main {
         doDBStuff();
 
         QueryGenerator queryGenerator = null;
-        STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm();
+        STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(1000);
         Database database = null;
 
         for (int i = 0; i < 1000 && queryGenerator.hasNextQuery(); i++) {
