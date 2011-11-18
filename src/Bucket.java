@@ -4,6 +4,8 @@ import java.util.List;
 
 public class Bucket {
 	
+	private static final double MIN_INTERSECTION_DISTANCE = 0.000000001;
+
 	private enum ShrinkDirection {
 	    H, V
 	}
@@ -111,6 +113,10 @@ public class Bucket {
     }
     
     
+    /**
+     * Identify candidate hole for the query q.
+     * @return A candidate hole. null if no candidates exist.
+     */
     public Bucket IdentifyCandiate(Query q, int tb)
     {
     	Rectangle2D.Double queryBox = q.getRectangle2D();    	
@@ -120,8 +126,7 @@ public class Bucket {
     		List<Bucket> participants = new LinkedList<Bucket>();
     		UpdateParticipants(participants, c);
 			
-    		do
-    		{
+    		while (!participants.isEmpty())	{
     			double minShrink = Double.MAX_VALUE;
     			ShrinkDirection direction = ShrinkDirection.H;
     			
@@ -162,50 +167,7 @@ public class Bucket {
     						direction = ShrinkDirection.V;
     					}
     				}
-    				/*if(participant.box.getMaxX()c.getMinX() >= participant.box.getMinX() && c.getMinX() <  participant.box.getMaxX()) {
-    					double startHSrink = participant.box.getMaxX() - c.getMinX();
-    					if(minHShrink > startHSrink) {
-    						minHShrink = startHSrink;
-    						hDirection = ShrinkDirection.Start;
-    					}
-    				}    				
-    				if(c.getMaxX() >= participant.box.getMinX() && c.getMaxX() <  participant.box.getMaxX()) {
-    					double endHSrink = c.getMaxX() - participant.box.getMinX();
-    					if(minHShrink > endHSrink) {
-    						minHShrink = endHSrink;
-    						hDirection = ShrinkDirection.End;
-    					}
-    				}  
-    				if(c.getMinY() >= participant.box.getMinY() && c.getMinY() <  participant.box.getMaxY()) {
-    					double startVSrink = participant.box.getMaxY() - c.getMinY();
-    					if(minVShrink > startVSrink) {
-    						minHShrink = startVSrink;
-    						vDirection = ShrinkDirection.Start;
-    					}
-    				}    				
-    				if(c.getMaxY() >= participant.box.getMinY() && c.getMaxY() <  participant.box.getMaxY()) {
-    					double endVSrink = c.getMaxY() - participant.box.getMinY();
-    					if(minVShrink > endVSrink) {
-    						minHShrink = endVSrink;
-    						vDirection = ShrinkDirection.End;
-    					}
-    				}*/
-                }
-    			
-    			/*
-    			if(minHShrink != Double.MAX_VALUE) {
-    				c.width -= minHShrink;
-    				if(hDirection == ShrinkDirection.Start) {
-    					c.x += minHShrink;
-    				}
-    			}
-    			
-    			if(minVShrink != Double.MAX_VALUE) {
-    				c.height -= minVShrink;
-    				if(vDirection == ShrinkDirection.Start) {
-    					c.y += minVShrink;
-    				}
-    			}*/
+                }  
     			
     			// Shrink
 				if (minShrink != Double.MAX_VALUE) {
@@ -225,7 +187,7 @@ public class Bucket {
 				}
     			
     			UpdateParticipants(participants, c);
-			} while (!participants.isEmpty());
+			}
 
     		if(c.getHeight() != 0 && c.getWidth() != 0)	{
         	  double vC = c.getHeight() * c.getWidth();
@@ -238,6 +200,9 @@ public class Bucket {
     	return null;
     }
     
+    /**
+     * Update the participant list of the shrink algorithm.
+     */
     private void UpdateParticipants(List<Bucket> participants, Rectangle2D.Double c)
     {
     	participants.clear();
@@ -245,7 +210,10 @@ public class Bucket {
 			if(childBucket.box.intersects(c)) {
 				if(!c.contains(childBucket.box))
 				{
-					participants.add(childBucket);
+					Rectangle2D.Double intersection = (Rectangle2D.Double) childBucket.box.createIntersection(c);
+					// :HACK: do not count very small overlaps (adjacent boxes) as intersection
+					if(intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE)
+					  participants.add(childBucket);
 				}
 			}					
 		}

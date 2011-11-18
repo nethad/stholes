@@ -4,7 +4,7 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 
 /**
- * Test the histogram volume and estimate functions.
+ * Test the histogram volume, estimate and IdentifyCandiate functions.
  * See "DB Impl Scenarios" document for used scenarios.
  */
 public class BucketTest {
@@ -33,11 +33,9 @@ public class BucketTest {
     	assertThat(RoundedVolume(root.getVolume()), is(1.0));
     	assertThat(RoundedEstimate(root.getEstimateForQuery(q)), is(600.0));
     	
-    	/*
     	Bucket candiateR = root.IdentifyCandiate(q, 200);
     	assertThat(RoundedVolume(candiateR.getVolume()), is(0.6));
     	assertThat(candiateR.getFrequency(), is(200));
-    	*/
     }
     
     @Test
@@ -49,11 +47,14 @@ public class BucketTest {
     	assertThat(RoundedVolume(root.getVolume()), is(0.68));
     	assertThat(RoundedEstimate(root.getEstimateForQuery(q)), is(604.41));
     	
-    	/*
+    	
     	Bucket candiateR = root.IdentifyCandiate(q, 200);
-    	assertThat(RoundedVolume(candiateR.getVolume()), is(0.6));
-    	assertThat(candiateR.getFrequency(), is(200));
-    	*/
+    	assertThat(RoundedVolume(candiateR.getVolume()), is(0.18));
+    	assertThat(candiateR.getFrequency(), is(99));
+    	
+    	Bucket candiateB1 = root.getChildren().get(0).IdentifyCandiate(q, 500);
+    	assertThat(RoundedVolume(candiateB1.getVolume()), is(0.24));
+    	assertThat(candiateB1.getFrequency(), is(500));
     }
     
     @Test
@@ -64,6 +65,19 @@ public class BucketTest {
     	
     	assertThat(RoundedVolume(root.getVolume()), is(0.68));
     	assertThat(RoundedEstimate(root.getEstimateForQuery(q)), is(942.75));
+    	
+    	Bucket candiateR = root.IdentifyCandiate(q, 200);
+    	// The shrink algorithm doesn't create a optimal solution for this setup. (Expected)
+    	assertThat(RoundedVolume(candiateR.getVolume()), is(0.06));
+    	assertThat(candiateR.getFrequency(), is(33));
+    	
+    	Bucket candiateB11 = root.getChildren().get(0).IdentifyCandiate(q, 500);
+    	assertThat(RoundedVolume(candiateB11.getVolume()), is(0.16));
+    	assertThat(candiateB11.getFrequency(), is(500)); 
+    	
+    	Bucket candiateB12 = root.getChildren().get(0).IdentifyCandiate(q, 300);
+    	assertThat(RoundedVolume(candiateB12.getVolume()), is(0.16));
+    	assertThat(candiateB12.getFrequency(), is(300));
     }
     
     @Test
