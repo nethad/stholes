@@ -1,8 +1,15 @@
+package ch.uzh.ifi.dbimpl.stholes;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 public class DefaultDatabase implements Database {
 
@@ -12,17 +19,24 @@ public class DefaultDatabase implements Database {
 	private static String USERNAME = "SA";
 	private static String PASSWORD = "";
 
-	private static String DB_FILE = "testdb";
+	private String dbFile = "testdb";
 	private static String TABLE_NAME = "test";
 
 	public DefaultDatabase() {
 		initialize();
 	}
 
+	public DefaultDatabase(String dbFile) {
+		if (dbFile != null) {
+			this.dbFile = dbFile;
+		}
+		initialize();
+	}
+
 	private void initialize() {
 		try {
 			connection = DriverManager.getConnection("jdbc:hsqldb:file:"
-					+ DB_FILE + ";ifexists=true", USERNAME, PASSWORD);
+					+ dbFile + ";ifexists=true", USERNAME, PASSWORD);
 			selectStatement = connection
 					.prepareStatement("select count(*) from " + TABLE_NAME
 							+ " where x between ? and ? and y between ? and ?");
@@ -46,5 +60,21 @@ public class DefaultDatabase implements Database {
 			System.err.println("SQLException: " + e.getMessage());
 		}
 		return 0;
+	}
+
+	public List<Point2D.Double> getAllDataPoints() {
+		ArrayList<Double> list = new ArrayList<Point2D.Double>();
+		try {
+			PreparedStatement selectStatement = connection
+					.prepareStatement("select x, y from " + TABLE_NAME);
+			ResultSet resultSet = selectStatement.executeQuery();
+			while (resultSet.next()) {
+				list.add(new Point2D.Double(resultSet.getDouble(1), resultSet
+						.getDouble(2)));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return list;
 	}
 }

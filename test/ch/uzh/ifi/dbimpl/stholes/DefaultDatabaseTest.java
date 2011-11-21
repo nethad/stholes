@@ -1,8 +1,12 @@
+package ch.uzh.ifi.dbimpl.stholes;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import ch.uzh.ifi.dbimpl.stholes.DefaultDatabase;
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 public class DefaultDatabaseTest {
 

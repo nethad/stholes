@@ -1,4 +1,7 @@
+package ch.uzh.ifi.dbimpl.stholes;
 import java.util.Random;
+
+import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 public class RandomQueryGenerator implements QueryGenerator {
 
