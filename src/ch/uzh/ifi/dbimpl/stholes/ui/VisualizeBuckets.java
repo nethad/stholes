@@ -1,5 +1,7 @@
 package ch.uzh.ifi.dbimpl.stholes.ui;
 
+import java.awt.Color;
+
 import javax.swing.JComponent;
 
 import ch.uzh.ifi.dbimpl.stholes.HistorgramFactory;
@@ -13,6 +15,12 @@ public class VisualizeBuckets extends VisualizationWindow {
 	public void drawHistogram(Bucket bucket, Query query) {
 		canvas.setRootBucket(bucket);
 		canvas.setQuery(query);
+	}
+	
+	public void drawHistogram(Bucket bucket, Query query, Bucket candidate) {
+		canvas.setRootBucket(bucket);
+		canvas.setQuery(query);
+		canvas.addAdditionalBucket(candidate, Color.GREEN);
 	}
 
 	public static void main(String[] args) {
@@ -32,8 +40,10 @@ public class VisualizeBuckets extends VisualizationWindow {
 		// new VisualizeBuckets().drawHistogram(bucket);
 		// bucket = HistorgramFactory.CreateHistogram6();
 		// new VisualizeBuckets().drawHistogram(bucket);
-		bucket = HistorgramFactory.CreateHistogram7();
-		visualizeBuckets.drawHistogram(bucket, query);
+		bucket = HistorgramFactory.CreateHistogram8();
+		//Bucket candiate = bucket.getChildren().get(0).IdentifyCandiate(query, 200);
+		Bucket candiate = bucket.IdentifyCandiate(query, 200);
+		visualizeBuckets.drawHistogram(bucket, query, candiate);
 		// bucket = HistorgramFactory.CreateHistogram8();
 		// new VisualizeBuckets().drawHistogram(bucket);
 		// bucket = HistorgramFactory.CreateHistogram9();
