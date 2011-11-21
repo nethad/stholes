@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Bucket {
+	
+	private static final double MIN_INTERSECTION_DISTANCE = 0.000000001;
 
 	private enum ShrinkDirection {
 		H, V
@@ -126,101 +128,64 @@ public class Bucket {
 	}
 
 	public Bucket IdentifyCandiate(Query q, int tb) {
-		Rectangle2D.Double queryBox = q.getRectangle2D();
-
-		if (this.box.intersects(queryBox)) {
-			Rectangle2D.Double c = (Rectangle2D.Double) this.box
-					.createIntersection(queryBox);
-			List<Bucket> participants = new LinkedList<Bucket>();
-			UpdateParticipants(participants, c);
-
-			do {
-				double minShrink = Double.MAX_VALUE;
-				ShrinkDirection direction = ShrinkDirection.H;
-
-				// Determine the shrink length
-				for (Bucket participant : participants) {
-					if (c.getMaxX() > participant.box.getMaxX()) {
-						// Could Shrink by reducing from the right.
-						double rightShrink = participant.box.getMaxX()
-								- c.getMinX();
-						if (rightShrink > 0 && rightShrink < minShrink) {
-							minShrink = -rightShrink;
-							direction = ShrinkDirection.H;
-						}
-					}
-
-					if (c.getMinX() < participant.box.getMinX()) {
-						// Could Shrink by reducing from the left.
-						double leftShrink = c.getMaxX()
-								- participant.box.getMinX();
-						if (leftShrink > 0 && leftShrink < minShrink) {
-							minShrink = leftShrink;
-							direction = ShrinkDirection.H;
-						}
-					}
-
-					if (c.getMaxY() > participant.box.getMaxY()) {
-						// Could Shrink by reducing from the top.
-						double topShrink = participant.box.getMaxY()
-								- c.getMinY();
-						if (topShrink > 0 && topShrink < minShrink) {
-							minShrink = -topShrink;
-							direction = ShrinkDirection.V;
-						}
-					}
-
-					if (c.getMinY() < participant.box.getMinY()) {
-						// Could Shrink by reducing from the bottom.
-						double bottomShrink = c.getMaxY()
-								- participant.box.getMinY();
-						if (bottomShrink > 0 && bottomShrink < minShrink) {
-							minShrink = bottomShrink;
-							direction = ShrinkDirection.V;
-						}
-					}
-					/*
-					 * if(participant.box.getMaxX()c.getMinX() >=
-					 * participant.box.getMinX() && c.getMinX() <
-					 * participant.box.getMaxX()) { double startHSrink =
-					 * participant.box.getMaxX() - c.getMinX(); if(minHShrink >
-					 * startHSrink) { minHShrink = startHSrink; hDirection =
-					 * ShrinkDirection.Start; } } if(c.getMaxX() >=
-					 * participant.box.getMinX() && c.getMaxX() <
-					 * participant.box.getMaxX()) { double endHSrink =
-					 * c.getMaxX() - participant.box.getMinX(); if(minHShrink >
-					 * endHSrink) { minHShrink = endHSrink; hDirection =
-					 * ShrinkDirection.End; } } if(c.getMinY() >=
-					 * participant.box.getMinY() && c.getMinY() <
-					 * participant.box.getMaxY()) { double startVSrink =
-					 * participant.box.getMaxY() - c.getMinY(); if(minVShrink >
-					 * startVSrink) { minHShrink = startVSrink; vDirection =
-					 * ShrinkDirection.Start; } } if(c.getMaxY() >=
-					 * participant.box.getMinY() && c.getMaxY() <
-					 * participant.box.getMaxY()) { double endVSrink =
-					 * c.getMaxY() - participant.box.getMinY(); if(minVShrink >
-					 * endVSrink) { minHShrink = endVSrink; vDirection =
-					 * ShrinkDirection.End; } }
-					 */
-				}
-
-				/*
-				 * if(minHShrink != Double.MAX_VALUE) { c.width -= minHShrink;
-				 * if(hDirection == ShrinkDirection.Start) { c.x += minHShrink;
-				 * } }
-				 * 
-				 * if(minVShrink != Double.MAX_VALUE) { c.height -= minVShrink;
-				 * if(vDirection == ShrinkDirection.Start) { c.y += minVShrink;
-				 * } }
-				 */
-
-				// Shrink
+    	Rectangle2D.Double queryBox = q.getRectangle2D();    	
+    	
+    	if (this.box.intersects(queryBox)) {
+    		Rectangle2D.Double c = (Rectangle2D.Double) this.box.createIntersection(queryBox);
+    		List<Bucket> participants = new LinkedList<Bucket>();
+    		UpdateParticipants(participants, c);
+			
+    		while (!participants.isEmpty())	{
+    			// :TODO: What is the smallest reduction of c? Volume or length
+    			double minShrink = Double.MAX_VALUE;
+    			ShrinkDirection direction = ShrinkDirection.H;
+    			
+    			// Determine the shrink length
+    			for (Bucket participant : participants) {
+    				if((c.getMaxX() - participant.box.getMaxX()) > MIN_INTERSECTION_DISTANCE) {
+    					// Could Shrink by reducing from the right.
+    					double rightShrink = participant.box.getMaxX() - c.getMinX();
+    					if(rightShrink > 0 && rightShrink < Math.abs(minShrink)) {
+    						minShrink = -rightShrink;
+    						direction = ShrinkDirection.H;
+    					}
+    				}
+    				
+    				if((c.getMinX() - participant.box.getMinX()) < MIN_INTERSECTION_DISTANCE) {
+    					// Could Shrink by reducing from the left.
+    					double leftShrink = c.getMaxX() - participant.box.getMinX();
+    					if(leftShrink > 0 && leftShrink < Math.abs(minShrink)) {
+    						minShrink = leftShrink;
+    						direction = ShrinkDirection.H;
+    					}
+    				}
+    				
+    				if((c.getMaxY() - participant.box.getMaxY()) > MIN_INTERSECTION_DISTANCE) {
+    					// Could Shrink by reducing from the top.
+    					double topShrink = participant.box.getMaxY() - c.getMinY();
+    					if(topShrink > 0 && topShrink < Math.abs(minShrink)) {
+    						minShrink = -topShrink;
+    						direction = ShrinkDirection.V;
+    					}
+    				}
+    				
+    				if((c.getMinY() - participant.box.getMinY()) < MIN_INTERSECTION_DISTANCE) {
+    					// Could Shrink by reducing from the bottom.
+    					double bottomShrink = c.getMaxY() - participant.box.getMinY();
+    					if(bottomShrink > 0 && bottomShrink < Math.abs(minShrink)) {
+    						minShrink = bottomShrink;
+    						direction = ShrinkDirection.V;
+    					}
+    				}
+                }  
+    			
+    			// Shrink
 				if (minShrink != Double.MAX_VALUE) {
 					if (direction == ShrinkDirection.H) {
 						c.width -= Math.abs(minShrink);
-						if (minShrink > 0) {
+						/*if (minShrink > 0) {
 							c.x += minShrink;
-						}
+						}*/
 					} else {
 						c.height -= Math.abs(minShrink);
 						if (minShrink > 0) {
@@ -230,30 +195,40 @@ public class Bucket {
 				} else {
 					throw new RuntimeException("No Shrink found");
 				}
-
-				UpdateParticipants(participants, c);
-			} while (!participants.isEmpty());
-
-			if (c.getHeight() != 0 && c.getWidth() != 0) {
-				double vC = c.getHeight() * c.getWidth();
-				double vQuB = this.getIntersectionVolume(q);
-				int tc = (int) (tb * vC / vQuB);
-				return new Bucket(c, tc);
+    			
+    			UpdateParticipants(participants, c);
 			}
-		}
 
-		return null;
+    		if(c.getHeight() != 0 && c.getWidth() != 0)	{
+        	  double vC = c.getHeight() * c.getWidth();
+        	  double vQuB = this.getIntersectionVolume(q);
+        	  
+        	  // :TODO: The paper doesn't tell what to do when child buckets are contained in the hole!
+        	  int tc;
+        	  if(vC < vQuB) {
+        		  tc = (int) (tb * vC / vQuB);
+        	  } else {
+        		  tc = tb;
+        	  }
+        	  return new Bucket(c, tc);
+    		}
+    	}
+    	
+    	return null;
 	}
 
-	private void UpdateParticipants(List<Bucket> participants,
-			Rectangle2D.Double c) {
-		participants.clear();
-		for (Bucket childBucket : children) {
-			if (childBucket.box.intersects(c)) {
-				if (!c.contains(childBucket.box)) {
-					participants.add(childBucket);
+	private void UpdateParticipants(List<Bucket> participants, Rectangle2D.Double c) {
+    	participants.clear();
+    	for (Bucket childBucket : children) {
+			if(childBucket.box.intersects(c)) {
+				if(!c.contains(childBucket.box))
+				{
+					Rectangle2D.Double intersection = (Rectangle2D.Double) childBucket.box.createIntersection(c);
+					// :HACK: do not count very small overlaps (adjacent boxes) as intersection
+					if(intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE)
+					  participants.add(childBucket);
 				}
-			}
+			}					
 		}
 	}
 
