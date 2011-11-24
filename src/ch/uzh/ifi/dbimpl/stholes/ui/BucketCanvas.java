@@ -65,12 +65,14 @@ public class BucketCanvas extends JComponent {
 	}
 
 	private void drawRectangles(Graphics g) {
-		for (DrawableRectangle dr : this.rectangles) {
-			g.setColor(dr.color);
-			g.drawRect(dr.rectangle.x, dr.rectangle.y, dr.rectangle.width,
-					dr.rectangle.height);
-			g.drawString(dr.labelText, dr.rectangle.x + LABEL_X_PADDING,
-					dr.rectangle.y + LABEL_Y_PADDING);
+		if(this.rectangles != null) {
+			for (DrawableRectangle dr : this.rectangles) {
+				g.setColor(dr.color);
+				g.drawRect(dr.rectangle.x, dr.rectangle.y, dr.rectangle.width,
+						dr.rectangle.height);
+				g.drawString(dr.labelText, dr.rectangle.x + LABEL_X_PADDING,
+						dr.rectangle.y + LABEL_Y_PADDING);
+			}
 		}
 	}
 
