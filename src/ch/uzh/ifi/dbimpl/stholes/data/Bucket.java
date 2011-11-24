@@ -14,23 +14,39 @@ public class Bucket {
 	private int frequency;
 	private final Rectangle2D.Double box;
 	private final List<Bucket> children;
+	// The parent link would not be required. however it makes the drill hole easier.
+	private Bucket parent;
 
 	public Bucket(double x0, double x1, double y0, double y1) {
 		this.box = new Rectangle2D.Double(x0, y0, x1 - x0, y1 - y0);
 		this.children = new LinkedList<Bucket>();
 	}
 
-	private Bucket(Rectangle2D.Double box, int frequency) {
+	private Bucket(Rectangle2D.Double box, int frequency, Bucket parent) {
 		this.box = box;
 		this.frequency = frequency;
+		this.parent = parent;
 		this.children = new LinkedList<Bucket>();
+	}
+	
+	public int getHistogramSize() {
+		int size = 1;
+		for (Bucket childBucket : this.children) {
+			size += childBucket.getHistogramSize();
+		}
+		return size; 
+	}
+	
+	public int getTotalEstimate() {
+		int estimate = this.frequency;
+		for (Bucket childBucket : this.children) {
+			estimate += childBucket.getTotalEstimate();
+		}
+		return estimate; 
 	}
 
 	/**
-	 * Gets the volume v(b) for this bucket. (without the volume of the
-	 * children)
-	 * 
-	 * @return
+	 * Gets the volume v(b) for this bucket. (without the volume of the children)
 	 */
 	public double getVolume() {
 		double volume = volumeForRectangle(this.box);
@@ -41,23 +57,16 @@ public class Bucket {
 	}
 
 	/**
-	 * Calculate the intersection volume between the bucket and the query. = v(q
-	 * UNION b)
-	 * 
-	 * @param queryIntersection
-	 * @param q
-	 * @return
+	 * Calculate the intersection volume between the bucket and the query. = v(q UNION b)
 	 */
 	private double getIntersectionVolume(Query q) {
 		Rectangle2D.Double queryBox = q.getRectangle2D();
-		Rectangle2D.Double queryIntersection = (Rectangle2D.Double) this.box
-				.createIntersection(queryBox);
+		Rectangle2D.Double queryIntersection = (Rectangle2D.Double) this.box.createIntersection(queryBox);
 		double intersectionVolume = volumeForRectangle(queryIntersection);
 		for (Bucket childBucket : this.children) {
 			if (childBucket.box.intersects(queryBox)) {
-				Rectangle2D.Double intersection = (Rectangle2D.Double) queryBox
-						.createIntersection(childBucket.box);
-				intersectionVolume -= volumeForRectangle(intersection);
+				Rectangle2D.Double intersection = (Rectangle2D.Double) queryIntersection.createIntersection(childBucket.box);
+				intersectionVolume -= volumeForRectangle(intersection);			
 			}
 		}
 
@@ -78,62 +87,99 @@ public class Bucket {
 	public double getEstimateForQuery(Query q) {
 		Rectangle2D.Double queryBox = q.getRectangle2D();
 		if (this.box.intersects(queryBox)) {
-			// Calculate the estimate for the bucket. = f(b) * ( v(q UNION b) /
-			// v(b) )
-			double estimate = this.getIntersectionVolume(q) / this.getVolume()
-					* this.frequency;
+			
+			// Calculate the estimate for the bucket. = f(b) * ( v(q UNION b) / v(b) )
+			double estimate;
+			if(this.getVolume() < -MIN_INTERSECTION_DISTANCE) {
+				estimate = 0;
+				if(this.parent != null) {
+					// Do not allow volume 0 for non root buckets. All other cases should be eliminated by drill hole case2
+					throw new RuntimeException("Bucket with volume 0 found");
+				}
+			} else {
+				estimate = this.getIntersectionVolume(q) / this.getVolume() * this.frequency;
+			}
 
-			// Estimate all children buckets and add them to the current
-			// estimate.
+			// Estimate all children buckets and add them to the current estimate.
 			for (Bucket childBucket : children) {
 				estimate += childBucket.getEstimateForQuery(q);
 			}
 
 			return estimate;
 		} else {
-			// No intersection with the query. -> Children will also not
-			// intersect.
+			// No intersection with the query. -> Children will also not intersect.
 			return 0D;
 		}
 	}
 
 	public void setFrequency(int frequency) {
+		if (frequency < 0) {
+			throw new RuntimeException("Cannot set a negative frequency");
+		}
 		this.frequency = frequency;
 	}
 
 	public int getFrequency() {
-		return this.frequency;
+		return (int)Math.round(this.frequency);
+	}
+	
+	public java.awt.geom.Rectangle2D.Double getRectangle() {
+		return box;
 	}
 
-	public void addChildBucket(Bucket childBucket) {
-		if (!box.contains(childBucket.box)) {
-			throw new RuntimeException(
-					"Trying to add child which is not contained in parten box."
-							+ "\n  Parent Box: " + box + "\n  Child Box: "
-							+ childBucket.box);
-		}
-		this.children.add(childBucket);
+	public Bucket getParent() {
+		return this.parent;
 	}
-
-	public void removeChildBucket(Bucket childBucket) {
-		this.children.remove(childBucket);
-	}
+	
 
 	public List<Bucket> getChildren() {
 		return this.children;
 	}
 
-	private static double volumeForRectangle(Rectangle2D.Double box) {
-		return box.getWidth() * box.getHeight();
+	public void addChildBucket(Bucket childBucket) {
+		// Only does:
+		// this.children.add(childBucket);
+		// childBucket.parent = this;
+		// The rest is debug code to prevent the creation of wrong histograms
+
+		if(box.getMaxX() < childBucket.box.getMaxX() || box.getMinX() > childBucket.box.getMinX() || box.getMaxY() < childBucket.box.getMaxY() || box.getMinY() > childBucket.box.getMinY()) {
+			throw new RuntimeException(
+					"Trying to add child which is not contained in parten box."
+							+ "\n  Parent Box: " + box + "\n  Child Box: "
+							+ childBucket.box);
+		}
+		
+		for (Bucket other : children) {
+			if(childBucket.box.intersects(other.box)) {
+				Rectangle2D.Double intersection = (Rectangle2D.Double) childBucket.box.createIntersection(other.box);
+				// :HACK: do not count very small overlaps (adjacent boxes) as intersection
+				if(intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE) {
+					throw new RuntimeException("Trying to add a child that would result in an overlap");
+				}
+			}					
+		}
+		
+		this.children.add(childBucket);
+		
+		if(this.parent != null && this.getVolume() <= MIN_INTERSECTION_DISTANCE) {
+			// Do not allow volume 0 for non root buckets
+			throw new RuntimeException("Adding a children results in a volume of 0");
+		}
+		childBucket.parent = this;
 	}
 
-	public Bucket IdentifyCandiate(Query q, int tb) {
+	private void removeChildBucket(Bucket childBucket) {
+		childBucket.parent = null;
+		this.children.remove(childBucket);
+	}
+
+	public Bucket identifyCandidate(Query q, int actualResultCount) {
     	Rectangle2D.Double queryBox = q.getRectangle2D();    	
     	
     	if (this.box.intersects(queryBox)) {
     		Rectangle2D.Double c = (Rectangle2D.Double) this.box.createIntersection(queryBox);
     		List<Bucket> participants = new LinkedList<Bucket>();
-    		UpdateParticipants(participants, c);
+    		updateParticipants(participants, c);
 			
     		while (!participants.isEmpty())	{
     			// :TODO: What is the smallest reduction of c? Volume or length
@@ -146,7 +192,7 @@ public class Bucket {
     					// Could Shrink by reducing from the right.
     					double rightShrink = participant.box.getMaxX() - c.getMinX();
     					if(rightShrink > 0 && rightShrink < Math.abs(minShrink)) {
-    						minShrink = -rightShrink;
+    						minShrink = rightShrink;
     						direction = ShrinkDirection.H;
     					}
     				}
@@ -155,7 +201,7 @@ public class Bucket {
     					// Could Shrink by reducing from the left.
     					double leftShrink = c.getMaxX() - participant.box.getMinX();
     					if(leftShrink > 0 && leftShrink < Math.abs(minShrink)) {
-    						minShrink = leftShrink;
+    						minShrink = -leftShrink;
     						direction = ShrinkDirection.H;
     					}
     				}
@@ -164,7 +210,7 @@ public class Bucket {
     					// Could Shrink by reducing from the top.
     					double topShrink = participant.box.getMaxY() - c.getMinY();
     					if(topShrink > 0 && topShrink < Math.abs(minShrink)) {
-    						minShrink = -topShrink;
+    						minShrink = topShrink;
     						direction = ShrinkDirection.V;
     					}
     				}
@@ -173,7 +219,7 @@ public class Bucket {
     					// Could Shrink by reducing from the bottom.
     					double bottomShrink = c.getMaxY() - participant.box.getMinY();
     					if(bottomShrink > 0 && bottomShrink < Math.abs(minShrink)) {
-    						minShrink = bottomShrink;
+    						minShrink = -bottomShrink;
     						direction = ShrinkDirection.V;
     					}
     				}
@@ -183,9 +229,9 @@ public class Bucket {
 				if (minShrink != Double.MAX_VALUE) {
 					if (direction == ShrinkDirection.H) {
 						c.width -= Math.abs(minShrink);
-						/*if (minShrink > 0) {
+						if (minShrink > 0) {
 							c.x += minShrink;
-						}*/
+						}
 					} else {
 						c.height -= Math.abs(minShrink);
 						if (minShrink > 0) {
@@ -193,46 +239,162 @@ public class Bucket {
 						}
 					}
 				} else {
-					throw new RuntimeException("No Shrink found");
+					// No shrink values could be found in an iteration -> abort
+					return null;
 				}
-    			
-    			UpdateParticipants(participants, c);
+
+				updateParticipants(participants, c);
 			}
 
-    		if(c.getHeight() != 0 && c.getWidth() != 0)	{
-        	  double vC = c.getHeight() * c.getWidth();
-        	  double vQuB = this.getIntersectionVolume(q);
-        	  
-        	  // :TODO: The paper doesn't tell what to do when child buckets are contained in the hole!
-        	  int tc;
-        	  if(vC < vQuB) {
-        		  tc = (int) (tb * vC / vQuB);
-        	  } else {
-        		  tc = tb;
-        	  }
-        	  return new Bucket(c, tc);
-    		}
-    	}
+			if (c.getHeight() != 0 && c.getWidth() != 0) {
+				// Only add non 0 buckets
+				int tc = (int)(actualResultCount * ((c.getHeight() * c.getWidth() / (queryBox.getHeight() * queryBox.getWidth()))));
+
+				return new Bucket(c, tc, this);
+			}
+		}
     	
     	return null;
 	}
 
-	private void UpdateParticipants(List<Bucket> participants, Rectangle2D.Double c) {
+	private void updateParticipants(List<Bucket> participants, Rectangle2D.Double c) {
     	participants.clear();
     	for (Bucket childBucket : children) {
 			if(childBucket.box.intersects(c)) {
-				if(!c.contains(childBucket.box))
-				{
+				if(!c.contains(childBucket.box)) {
 					Rectangle2D.Double intersection = (Rectangle2D.Double) childBucket.box.createIntersection(c);
 					// :HACK: do not count very small overlaps (adjacent boxes) as intersection
-					if(intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE)
-					  participants.add(childBucket);
+					if(intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE) {
+						participants.add(childBucket);
+					}
+				} else if (rectangleEquals(c, childBucket.box)) {
+					// Add the childBucket if it is equal to the query box. -> No shrink will be found and no candidate will be created
+					// This is correct since the candidate will be created in the child
+					participants.add(childBucket);
 				}
 			}					
 		}
 	}
 
-	public java.awt.geom.Rectangle2D.Double getRectangle() {
-		return box;
+	public void drillHole(Bucket candidate) {
+		if(boxEquals(candidate)) {
+			// Case 1: both buckets reference the same box.
+			
+			// :TODO: The paper does not mention to change the frequency in this case!
+			for (Bucket childBucket : children) {
+				if (candidate.box.contains(childBucket.box)) {
+					candidate.frequency -= childBucket.frequency;
+				}
+			}
+			
+			if(candidate.frequency < 0) {
+				candidate.frequency = 0;
+			}
+			
+			this.frequency = candidate.frequency;
+		} 
+		else if(isRemainingSpace(this, candidate)) {
+			eliminateBucket(this, candidate);
+		} else {
+			// Case 3: Default
+			List<Bucket> toMove = new LinkedList<Bucket>();
+
+			// Move all contained children into the candidate
+			for (Bucket childBucket : children) {
+				if (candidate.box.contains(childBucket.box)) {
+					toMove.add(childBucket);
+				}
+			}
+
+			for (Bucket m : toMove) {
+				this.removeChildBucket(m);
+				if(isRemainingSpace(candidate, m)) {
+					return; // :TODO: The paper does not mention who to handle this rare case. Just forget about the candidate.
+				} else {
+					candidate.addChildBucket(m);
+					// :TODO: The paper does not mention to change the frequency in this case!
+					candidate.frequency -= m.getTotalEstimate();
+				}				
+			}
+			
+			if(candidate.frequency < 0) {
+				candidate.frequency = 0;
+			}
+
+			// Reevaluate case 2 after modifying the children.
+			// :TODO: The paper does not mention this case!
+			if (isRemainingSpace(this, candidate)) {
+				eliminateBucket(this, candidate);
+			} else {
+				
+				// Case 3: Default (cont.)
+				// Add the candidate
+				this.addChildBucket(candidate);
+
+				// Update the frequency
+				int newFrequency = this.frequency - candidate.frequency;
+				if (newFrequency >= 0) {
+					this.frequency = newFrequency;
+				} else {
+					this.frequency = 0;
+				}
+			}
+		}
+	}
+	
+	private static boolean isRemainingSpace(Bucket bucket, Bucket candidate) {
+		// :TODO: The paper does not specify what to do when this case happens for the root bucket! > Never remove the root bucket.
+		boolean case2 = bucket.parent != null;
+		// Check if the remaining volume is 0
+		case2 = case2 && Math.abs(bucket.getVolume() - volumeForRectangle(candidate.box)) <= MIN_INTERSECTION_DISTANCE;
+		if(case2) {
+			for (Bucket childBucket : bucket.children) {
+				// The candidate must not be contained in any other children.
+				case2 = case2 && !childBucket.box.contains(candidate.box);				
+			}
+		}	
+		
+		return case2;
+	}
+	
+	private static void eliminateBucket(Bucket bucketToRemove, Bucket candidate) {
+		// Case 2: candidate hole covers all the remaining space
+
+		// Remove the own bucket from the parent
+		Bucket oldParent = bucketToRemove.parent;
+		oldParent.removeChildBucket(bucketToRemove);
+
+		// Move all children from the bucket to the parent
+		for (Bucket childBucket : bucketToRemove.children) {
+			oldParent.addChildBucket(childBucket);
+		}
+		bucketToRemove.children.clear();
+
+		// Add the candidate to the parent
+		oldParent.addChildBucket(candidate);
+	}
+
+	private static double volumeForRectangle(Rectangle2D.Double box) {
+		return box.getWidth() * box.getHeight();
+	}
+
+	private boolean boxEquals(Bucket other) {
+		return rectangleEquals(this.box, other.box);
+	}
+
+	private static boolean rectangleEquals(Rectangle2D.Double a, Rectangle2D.Double b) {
+		if (Math.round(a.getX() * 1 / MIN_INTERSECTION_DISTANCE) != Math.round(b.getX() * 1 / MIN_INTERSECTION_DISTANCE)) {
+			return false;
+		}
+		if (Math.round(a.getY() * 1 / MIN_INTERSECTION_DISTANCE) != Math.round(b.getY() * 1 / MIN_INTERSECTION_DISTANCE)) {
+			return false;
+		}
+		if (Math.round(a.getWidth() * 1 / MIN_INTERSECTION_DISTANCE) != Math.round(b.getWidth() * 1 / MIN_INTERSECTION_DISTANCE)) {
+			return false;
+		}
+		if (Math.round(a.getHeight() * 1 / MIN_INTERSECTION_DISTANCE) != Math.round(b.getHeight() * 1 / MIN_INTERSECTION_DISTANCE)) {
+			return false;
+		}
+		return true;
 	}
 }
