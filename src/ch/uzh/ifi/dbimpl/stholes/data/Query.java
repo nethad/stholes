@@ -1,4 +1,5 @@
 package ch.uzh.ifi.dbimpl.stholes.data;
+
 import java.awt.geom.Rectangle2D;
 
 public class Query {
@@ -14,8 +15,7 @@ public class Query {
 
 	@Override
 	public String toString() {
-		return "[Query xMin: " + xMin + ", xMax: " + xMax + ", yMin: " + yMin
-				+ ", yMax: " + yMax + "]";
+		return "[Query xMin: " + xMin + ", xMax: " + xMax + ", yMin: " + yMin + ", yMax: " + yMax + "]";
 	}
 
 	public Rectangle2D.Double getRectangle2D() {
@@ -36,5 +36,9 @@ public class Query {
 
 	public double getYMax() {
 		return yMax;
+	}
+
+	public double getSelectivity() {
+		return (xMax - xMin) * (yMax - yMin);
 	}
 }

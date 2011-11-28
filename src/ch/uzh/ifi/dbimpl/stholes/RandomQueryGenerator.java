@@ -1,35 +1,21 @@
 package ch.uzh.ifi.dbimpl.stholes;
-import java.util.Random;
 
 import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
-public class RandomQueryGenerator implements QueryGenerator {
+public class RandomQueryGenerator extends AbstractRandomQueryGenerator {
 
-	private final Random randomGenerator;
-
-	public RandomQueryGenerator() {
-		randomGenerator = new Random();
-	}
+	// private final Random randomGenerator;
 
 	@Override
 	public Query nextQuery() {
 		double[] numbers = new double[4];
 		for (int i = 0; i < 4; i++) {
-			numbers[i] = randomGenerator.nextDouble();
+			numbers[i] = getRandom().nextDouble();
 		}
 		double[] firstInterval = sortedInterval(numbers[0], numbers[1]);
 		double[] secondInterval = sortedInterval(numbers[2], numbers[3]);
 
-		return new Query(firstInterval[0], firstInterval[1], secondInterval[0],
-				secondInterval[1]);
-	}
-
-	private double[] sortedInterval(double first, double second) {
-		if (second > first) {
-			return new double[] { first, second };
-		} else {
-			return new double[] { second, first };
-		}
+		return buildQuery(firstInterval, secondInterval);
 	}
 
 	@Override
