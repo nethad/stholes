@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ch.uzh.ifi.dbimpl.stholes.data.Bucket;
+import ch.uzh.ifi.dbimpl.stholes.data.Merge;
 import ch.uzh.ifi.dbimpl.stholes.data.Query;
 
 public class STHolesAlgorithm {
@@ -15,6 +16,7 @@ public class STHolesAlgorithm {
 
 	/**
 	 * Creates a new StHoles Algorithm.
+	 * IF A DATABASE IS PASSED THE ALGORITHM ACCESSES THE DATABASE AN READS THE REAL RESULT FOR ALL CANDIDATE HOLES.
 	 */
 	public STHolesAlgorithm(int maxBucketCount, Database db) {
 		this.maxBucketCount = maxBucketCount;
@@ -23,13 +25,13 @@ public class STHolesAlgorithm {
 		this.rootBucket = new Bucket(0.0, 1.0, 0.0, 1.0);
 		this.db = db;
 	}
-	
+
 	public Bucket getRootBucket() {
 		return rootBucket;
 	}
 
 	/**
-	 * Estimates the query.
+	 * Estimates a query.
 	 */
 	public double getEstimateForQuery(Query q) {
 		return rootBucket.getEstimateForQuery(q);
@@ -40,31 +42,34 @@ public class STHolesAlgorithm {
 	 */
 	public void updateHistogram(Query q, int actualResultCount) {
 		// :NOTE: We do not perform the 1 step of the algorithm.
-		// if q is not contained in H, expand H's root bucket so that it
-		// contains q.
+		// > if q is not contained in H, expand H's root bucket so that it contains q.
 		// our implementation only support a fixed size root bucket. (0.0-1.0)
 
 		// identify candidate holes
 		List<Bucket> candidates = new LinkedList<Bucket>();
 		identifyCandidateHoles(candidates, rootBucket, q, actualResultCount);
-	
+
 		// drill candidate holes
 		for (Bucket candidate : candidates) {
-			Query candidateQuery = new Query(candidate.getRectangle().getMinX(), 
-					candidate.getRectangle().getMaxX(),
-					candidate.getRectangle().getMinY(),
+			Query candidateQuery = new Query(candidate.getRectangle().getMinX(), candidate.getRectangle().getMaxX(), candidate.getRectangle().getMinY(),
 					candidate.getRectangle().getMaxY());
-			
+
 			// Only update if the current estimate with the current histogram is wrong
-			if(Math.round(getEstimateForQuery(candidateQuery)) != candidate.getFrequency()) {
+			if (Math.round(getEstimateForQuery(candidateQuery)) != candidate.getFrequency()) {
 				Bucket parent = candidate.getParent();
 				parent.drillHole(candidate);
 			}
 		}
 
-		// merge superfluous buckets
-		if(rootBucket.getHistogramSize() > maxBucketCount) {
-			// TODO Merge
+		// merge superfluous buckets as long as the number of buckets exceeds the maximum
+		while (rootBucket.getHistogramSize() > maxBucketCount) {
+			// Merges are processed one by one as described in the paper.
+			// Therefore the candidates are recalculate every step.
+			Merge m = idendifyNextMergeCandidate(rootBucket);
+			if (m == null) {
+				throw new RuntimeException("No Merge Found");
+			}
+			m.executeMerge();
 		}
 	}
 
@@ -82,9 +87,9 @@ public class STHolesAlgorithm {
 				// Read the real result directly for all candidates. --> all candidates have the correct frequency.
 				Rectangle2D intersection = candidate.getRectangle();
 				Query candidateQuery = new Query(intersection.getMinX(), intersection.getMaxX(), intersection.getMinY(), intersection.getMaxY());
-
 				candidate.setFrequency(db.executeCountQuery(candidateQuery));
 			}
+			
 			candidates.add(candidate);
 		}
 
@@ -93,5 +98,26 @@ public class STHolesAlgorithm {
 				identifyCandidateHoles(candidates, childBucket, q, actualResultCount);
 			}
 		}
+	}
+
+	/**
+	 * Identify the best merge candidate for the histogram.
+	 */
+	private Merge idendifyNextMergeCandidate(Bucket b) {
+		Merge bestMerge = b.idetifyBestParentChildMerge();
+		Merge nextMerge = b.idetifyBestSiblingMerge();
+
+		if ((bestMerge != null && nextMerge != null && nextMerge.getPenalty() < bestMerge.getPenalty()) || nextMerge != null) {
+			bestMerge = nextMerge;
+		}
+
+		for (Bucket childBucket : b.getChildren()) {
+			nextMerge = idendifyNextMergeCandidate(childBucket);
+			if ((bestMerge != null && nextMerge != null && nextMerge.getPenalty() < bestMerge.getPenalty()) || nextMerge != null) {
+				bestMerge = nextMerge;
+			}
+		}
+
+		return bestMerge;
 	}
 }
