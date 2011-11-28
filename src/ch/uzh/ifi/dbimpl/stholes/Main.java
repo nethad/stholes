@@ -6,7 +6,7 @@ import ch.uzh.ifi.dbimpl.stholes.ui.VisualizeSTHoles;
 public class Main {
 
 	private static final int VISUALIZATION_INTERVAL = 10;
-	private static final int NUMBER_OF_QUERYS = 1000;
+	private static final int NUMBER_OF_QUERIES = 100;
 
 	public static void main(String[] args) {
 		QueryGenerator queryGenerator = new RandomQueryGenerator();
@@ -24,7 +24,7 @@ public class Main {
 		stHolesAlgorithm.updateHistogram(start, 9872);
 		System.out.println("Starting with total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate());
 
-		for (int i = 0; i < NUMBER_OF_QUERYS && queryGenerator.hasNextQuery(); i++) {
+		for (int i = 0; i < NUMBER_OF_QUERIES && queryGenerator.hasNextQuery(); i++) {
 			System.out.println("\nNext Query\n");
 
 			visualizeSTHoles.setQueryNumber(i);
