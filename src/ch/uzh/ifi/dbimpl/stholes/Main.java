@@ -10,6 +10,9 @@ public class Main {
 
 	public static void main(String[] args) {
 		QueryGenerator queryGenerator = new RandomQueryGenerator();
+
+		// ((RandomQueryGenerator) queryGenerator).setSelectivity(0.25);
+
 		Database database = new DefaultDatabase("db/random");
 		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(100, database);
 
@@ -31,6 +34,8 @@ public class Main {
 
 			Query query = queryGenerator.nextQuery();
 			visualizeSTHoles.setCurrentQuery(query);
+
+			System.out.println("Query selectivity: " + query.getSelectivity());
 
 			int actualResultCount = database.executeCountQuery(query);
 			double estimatedCount = stHolesAlgorithm.getEstimateForQuery(query);
