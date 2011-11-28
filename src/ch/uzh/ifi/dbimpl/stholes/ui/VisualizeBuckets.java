@@ -16,7 +16,7 @@ public class VisualizeBuckets extends VisualizationWindow {
 		canvas.setRootBucket(bucket);
 		canvas.setQuery(query);
 	}
-	
+
 	public void drawHistogram(Bucket bucket, Query query, Bucket candidate) {
 		canvas.setRootBucket(bucket);
 		canvas.setQuery(query);
@@ -41,8 +41,9 @@ public class VisualizeBuckets extends VisualizationWindow {
 		// bucket = HistorgramFactory.CreateHistogram6();
 		// new VisualizeBuckets().drawHistogram(bucket);
 		bucket = HistorgramFactory.CreateHistogram8();
-		//Bucket candiate = bucket.getChildren().get(0).IdentifyCandiate(query, 200);
-		Bucket candiate = bucket.IdentifyCandiate(query, 200);
+		// Bucket candiate = bucket.getChildren().get(0).IdentifyCandiate(query,
+		// 200);
+		Bucket candiate = bucket.identifyCandidate(query, 200);
 		visualizeBuckets.drawHistogram(bucket, query, candiate);
 		// bucket = HistorgramFactory.CreateHistogram8();
 		// new VisualizeBuckets().drawHistogram(bucket);
