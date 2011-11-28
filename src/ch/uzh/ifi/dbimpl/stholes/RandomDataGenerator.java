@@ -1,4 +1,5 @@
 package ch.uzh.ifi.dbimpl.stholes;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,8 +27,7 @@ public class RandomDataGenerator {
 		try {
 			// connection = DriverManager.getConnection("jdbc:hsqldb:file:"
 			// + dbFile + ";ifexists=true", USERNAME, PASSWORD);
-			connection = DriverManager.getConnection("jdbc:hsqldb:file:"
-					+ dbFile, USERNAME, PASSWORD);
+			connection = DriverManager.getConnection("jdbc:hsqldb:file:" + dbFile, USERNAME, PASSWORD);
 
 			System.out.println("Create table...");
 			long start = System.currentTimeMillis();
@@ -35,6 +35,9 @@ public class RandomDataGenerator {
 			connection.commit();
 			System.out.println("Insert random values...");
 			insertRandomValues();
+			connection.commit();
+			System.out.println("Create indices on (x, y)...");
+			createIndices();
 			connection.commit();
 			long end = System.currentTimeMillis();
 			connection.close();
@@ -44,11 +47,16 @@ public class RandomDataGenerator {
 		}
 	}
 
+	private void createIndices() throws SQLException {
+		PreparedStatement createIndexStatement = connection.prepareStatement("create index idx_datapoints on "
+				+ TABLE_NAME + " (x, y)");
+		createIndexStatement.execute();
+	}
+
 	private void insertRandomValues() throws SQLException {
 		Random randomGenerator = new Random();
-		PreparedStatement insertStatement = connection
-				.prepareStatement("insert into " + TABLE_NAME
-						+ " (x, y) values (?,?)");
+		PreparedStatement insertStatement = connection.prepareStatement("insert into " + TABLE_NAME
+				+ " (x, y) values (?,?)");
 
 		for (int i = 0; i < NUMBER_OF_DATAPOINTS; i++) {
 			insertStatement.setDouble(1, randomGenerator.nextDouble());
@@ -60,8 +68,7 @@ public class RandomDataGenerator {
 
 	private void createTable() throws SQLException {
 		Statement createStatement = connection.createStatement();
-		createStatement.execute("create table " + TABLE_NAME
-				+ " (id integer identity, x double, y double);");
+		createStatement.execute("create table " + TABLE_NAME + " (id integer identity, x double, y double);");
 
 	}
 
