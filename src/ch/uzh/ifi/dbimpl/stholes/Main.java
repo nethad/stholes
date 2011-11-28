@@ -1,13 +1,21 @@
 package ch.uzh.ifi.dbimpl.stholes;
 
 import ch.uzh.ifi.dbimpl.stholes.data.Query;
+import ch.uzh.ifi.dbimpl.stholes.ui.VisualizeSTHoles;
 
 public class Main {
+
+	private static final int VISUALIZATION_INTERVAL = 10;
+	private static final int NUMBER_OF_QUERYS = 1000;
 
 	public static void main(String[] args) {
 		QueryGenerator queryGenerator = new RandomQueryGenerator();
 		Database database = new DefaultDatabase("db/random");
 		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(100, database);
+
+		VisualizeSTHoles visualizeSTHoles = new VisualizeSTHoles();
+		visualizeSTHoles.setDataPoints(((DefaultDatabase) database).getAllDataPoints());
+
 		long error = 0;
 
 		// Optional: Run an initial query against the complete range. (Simulate
@@ -16,9 +24,14 @@ public class Main {
 		stHolesAlgorithm.updateHistogram(start, 9872);
 		System.out.println("Starting with total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate());
 
-		for (int i = 0; i < 100 && queryGenerator.hasNextQuery(); i++) {
+		for (int i = 0; i < NUMBER_OF_QUERYS && queryGenerator.hasNextQuery(); i++) {
 			System.out.println("\nNext Query\n");
+
+			visualizeSTHoles.setQueryNumber(i);
+
 			Query query = queryGenerator.nextQuery();
+			visualizeSTHoles.setCurrentQuery(query);
+
 			int actualResultCount = database.executeCountQuery(query);
 			double estimatedCount = stHolesAlgorithm.getEstimateForQuery(query);
 
@@ -27,6 +40,11 @@ public class Main {
 			System.out.println(query.toString() + "; estimated count: " + estimatedCount + ", actual count: "
 					+ actualResultCount);
 			stHolesAlgorithm.updateHistogram(query, actualResultCount);
+
+			if (i % VISUALIZATION_INTERVAL == 0) {
+				visualizeSTHoles.setRootBucket(stHolesAlgorithm.getRootBucket());
+			}
+
 			System.out.print("Square Error = " + (error) / (i + 1));
 			System.out.print("\t\t| HistSize = " + stHolesAlgorithm.getRootBucket().getHistogramSize());
 			System.out.print("\t\t| total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate() + "\n");

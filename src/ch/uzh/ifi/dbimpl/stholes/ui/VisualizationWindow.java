@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 
 public abstract class VisualizationWindow {
 
+	protected static final String DEFAULT_TITLE = "STHoles";
 	private JFrame frame;
 	private JComponent canvas;
 
@@ -20,7 +21,7 @@ public abstract class VisualizationWindow {
 		this.frame.setSize(800, 800);
 		this.frame.setLayout(new GridLayout(1, 1));
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.frame.setTitle("STHoles");
+		this.frame.setTitle(DEFAULT_TITLE);
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout(1, 1));
 		canvas = newCanvas();
@@ -31,4 +32,7 @@ public abstract class VisualizationWindow {
 
 	protected abstract JComponent newCanvas();
 
+	protected void setTitle(String title) {
+		this.frame.setTitle(title);
+	}
 }
