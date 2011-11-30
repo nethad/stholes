@@ -6,7 +6,8 @@ import ch.uzh.ifi.dbimpl.stholes.ui.VisualizeSTHoles;
 public class Main {
 
 	private static final int VISUALIZATION_INTERVAL = 10;
-	private static final int NUMBER_OF_QUERIES = 100;
+	private static final int NUMBER_OF_QUERIES = 1000;
+	private static final int MAX_NUMBER_OF_BUCKETS = 10;
 
 	public static void main(String[] args) {
 		QueryGenerator queryGenerator = new RandomQueryGenerator();
@@ -14,7 +15,7 @@ public class Main {
 		// ((RandomQueryGenerator) queryGenerator).setSelectivity(0.25);
 
 		Database database = new DefaultDatabase("db/random");
-		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(100, database);
+		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(MAX_NUMBER_OF_BUCKETS, database);
 
 		VisualizeSTHoles visualizeSTHoles = new VisualizeSTHoles();
 		visualizeSTHoles.setDataPoints(((DefaultDatabase) database).getAllDataPoints());
@@ -24,7 +25,7 @@ public class Main {
 		// Optional: Run an initial query against the complete range. (Simulate
 		// the fact that we already know the complete count)
 		Query start = new Query(0.0, 1.0, 0.0, 1.0);
-		stHolesAlgorithm.updateHistogram(start, 9872);
+		stHolesAlgorithm.updateHistogram(start, 10000);
 		System.out.println("Starting with total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate());
 
 		for (int i = 0; i < NUMBER_OF_QUERIES && queryGenerator.hasNextQuery(); i++) {
@@ -42,6 +43,7 @@ public class Main {
 
 			error += Math.pow(Math.round(estimatedCount - actualResultCount), 2);
 
+			
 			System.out.println(query.toString() + "; estimated count: " + estimatedCount + ", actual count: "
 					+ actualResultCount);
 			stHolesAlgorithm.updateHistogram(query, actualResultCount);
@@ -53,6 +55,7 @@ public class Main {
 			System.out.print("Square Error = " + (error) / (i + 1));
 			System.out.print("\t\t| HistSize = " + stHolesAlgorithm.getRootBucket().getHistogramSize());
 			System.out.print("\t\t| total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate() + "\n");
+			
 		}
 	}
 }
