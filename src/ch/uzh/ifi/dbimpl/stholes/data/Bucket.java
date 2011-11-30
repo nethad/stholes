@@ -296,11 +296,12 @@ public class Bucket {
 				candidate.frequency = 0;
 			}
 
-			if (this.lastVFactor < candidate.lastVFactor) {
+			//if (this.lastVFactor < candidate.lastVFactor) {
 				// Only update the frequency if the candidate frequency was calculated from a better approximation.
 				// :TODO: THIS IS NOT PART OF THE PAPER! (Only works when the data is static)
 				this.frequency = candidate.frequency;
-			}
+			//	this.lastVFactor = candidate.lastVFactor;
+			//}
 		} else if (isRemainingSpace(this, candidate)) {
 			eliminateBucket(this, candidate);
 		} else {
@@ -334,7 +335,6 @@ public class Bucket {
 			if (isRemainingSpace(this, candidate)) {
 				eliminateBucket(this, candidate);
 			} else {
-
 				// Case 3: Default (cont.)
 				// Add the candidate
 				this.addChildBucket(candidate);
@@ -390,8 +390,11 @@ public class Bucket {
 		Merge m = null;
 		double minPenalty = Double.MAX_VALUE;
 		for (Bucket bc : bp.children) {
-			double penalty = Math.abs(bp.frequency - (bp.frequency + bc.frequency) * (bp.getVolume() / bc.getVolume()))
-					+ Math.abs(bc.frequency - (bp.frequency + bc.frequency) * (bc.getVolume() / bp.getVolume()));
+			int fBN = bp.frequency + bc.frequency;
+			double vBN = bp.getVolume() + bc.getVolume();
+			double penalty = 
+					Math.abs(bp.frequency - fBN * (bp.getVolume() / vBN)) + 
+					Math.abs(bc.frequency - fBN * (bc.getVolume() / vBN));
 
 			if (penalty < minPenalty) {
 				minPenalty = penalty;
@@ -440,11 +443,9 @@ public class Bucket {
 				// This case is handled by the parent child merge
 				if (!rectangleEquals(this.box, bn)) {
 					// Calculate the participants (Here the children that are contained in bn)
-					List<Bucket> participants = new LinkedList<Bucket>();
 					double vOld = volumeForRectangle(bn) - volumeForRectangle(b1.box) - volumeForRectangle(b2.box);
 					for (Bucket i : this.children) {
 						if (i != b1 && i != b2 && bn.contains(i.box)) {
-							participants.add(i);
 							vOld -= volumeForRectangle(i.box);
 						}
 					}
@@ -452,11 +453,13 @@ public class Bucket {
 					// Calculate the penalty
 					int fBN = (int) Math.round((b1.frequency + b2.frequency + this.frequency * (vOld / this.getVolume())));
 					int fBP = (int) Math.round((this.frequency * (1 - (vOld / this.getVolume()))));
-					double vBN = vOld + b1.getVolume() + b2.getVolume();
-					double vBP = this.getVolume();
+					double vBN = vOld + volumeForRectangle(b1.box) + volumeForRectangle(b2.box);
+					double vBP = this.getVolume() - vOld;
 
-					double penalty = Math.abs(fBN * (vOld / vBN) - fBP * (vOld / vBP)) + Math.abs(b1.frequency - fBN * (b1.getVolume() / vBN))
-							+ Math.abs(b2.frequency - fBN * (b2.getVolume() / vBN));
+					double penalty = 
+							Math.abs(fBN * (vOld / vBN) - fBP * (vOld / vBP)) + 
+							Math.abs(b1.frequency - fBN * (b1.getVolume() / vBN)) + 
+							Math.abs(b2.frequency - fBN * (b2.getVolume() / vBN));
 
 					if (penalty < minPenalty) {
 						minPenalty = penalty;
