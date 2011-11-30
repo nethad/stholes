@@ -69,6 +69,7 @@ public class STHolesAlgorithm {
 			if (m == null) {
 				throw new RuntimeException("No Merge Found");
 			}
+			//DEBUGOUT System.out.println("Merge("+m.getClass().getName()+") with penalty: "+m.getPenalty());
 			m.executeMerge();
 		}
 	}
@@ -104,20 +105,33 @@ public class STHolesAlgorithm {
 	 * Identify the best merge candidate for the histogram.
 	 */
 	private Merge idendifyNextMergeCandidate(Bucket b) {
-		Merge bestMerge = b.idetifyBestParentChildMerge();
-		Merge nextMerge = b.idetifyBestSiblingMerge();
-
-		if ((bestMerge != null && nextMerge != null && nextMerge.getPenalty() < bestMerge.getPenalty()) || nextMerge != null) {
-			bestMerge = nextMerge;
+		Merge parentMerge = b.idetifyBestParentChildMerge();
+		//DEBUGOUT if(parentMerge != null)	System.out.println("Merge Parent with penalty: "+parentMerge.getPenalty());
+		Merge siblingMerge = b.idetifyBestSiblingMerge();
+		//DEBUGOUT if(siblingMerge != null) System.out.println("Merge Sibling with penalty: "+siblingMerge.getPenalty());
+		
+		Merge bestMerge = null;
+		if (parentMerge != null && siblingMerge != null) {
+			if(parentMerge.getPenalty() < siblingMerge.getPenalty()) {
+				bestMerge = parentMerge;
+			} else {
+				bestMerge = siblingMerge;
+			}			
+		} else if(parentMerge != null) {
+			bestMerge = parentMerge;
+		} else if(siblingMerge != null) {
+			bestMerge = siblingMerge;
 		}
 
 		for (Bucket childBucket : b.getChildren()) {
-			nextMerge = idendifyNextMergeCandidate(childBucket);
-			if ((bestMerge != null && nextMerge != null && nextMerge.getPenalty() < bestMerge.getPenalty()) || nextMerge != null) {
-				bestMerge = nextMerge;
+			Merge childMerge = idendifyNextMergeCandidate(childBucket);
+			if(childMerge != null) {
+				if (bestMerge == null || childMerge.getPenalty() < bestMerge.getPenalty()) {
+					bestMerge = childMerge;
+				}
 			}
 		}
-
+		
 		return bestMerge;
 	}
 }
