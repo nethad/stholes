@@ -23,25 +23,27 @@ public class SelectivityQueryGeneratorTest {
 	private final double[] expectedSecondInterval;
 	private final double upperBoundSecondInterval;
 	private final double selectivity;
+	private final double[] expectedFirstInterval;
 
 	@Parameters
 	public static Collection<Object[]> parameters() {
 		// double[] firstInterval
 		// double upperBoundSecondInterval
 		// double selectivity
+		// double[] expectedFirstInterval
 		// double[] expectedSecondInterval
 		return Arrays.asList(new Object[][] {
-				{ new double[] { 0.1, 0.2 }, 0.05D, 0.01D, new double[] { 0.0, 0.1 } },
-				{ new double[] { 0.9, 1.0 }, 1.0D, 0.01D, new double[] { 0.9, 1.0 } },
-				// { new double[] { 0.5, 0.55 }, 0.1D, 0.5D, new double[] { 0.0,
-				// 1.0 } }
+				{ new double[] { 0.1, 0.2 }, 0.05D, 0.01D, new double[] { 0.1, 0.2 }, new double[] { 0.0, 0.1 } },
+				{ new double[] { 0.9, 1.0 }, 1.0D, 0.01D, new double[] { 0.9, 1. }, new double[] { 0.9, 1.0 } },
+				{ new double[] { 0.5, 0.55 }, 0.1D, 0.5D, new double[] { 0.275, 0.775 }, new double[] { 0.0, 1.0 } }
 		});
 	}
 
 	public SelectivityQueryGeneratorTest(double[] firstInterval, double upperBoundSecondInterval, double selectivity,
-			double[] secondInterval) {
+			double[] expectedFirstInterval, double[] expectedSecondInterval) {
 		this.firstInterval = firstInterval;
-		this.expectedSecondInterval = secondInterval;
+		this.expectedFirstInterval = expectedFirstInterval;
+		this.expectedSecondInterval = expectedSecondInterval;
 		this.upperBoundSecondInterval = upperBoundSecondInterval;
 		this.selectivity = selectivity;
 		generator = new SelectivityQueryGenerator(selectivity);
@@ -49,18 +51,38 @@ public class SelectivityQueryGeneratorTest {
 
 	@Test
 	public void testSecondIntervalCalculation() {
-		double[] calculatedSecondInterval = generator.calculateSecondInterval(this.firstInterval,
+		double[][] calculatedIntervals = generator.calculateSecondInterval(this.firstInterval,
 				this.upperBoundSecondInterval);
-		assertThat(calculatedSecondInterval[0], closeTo(expectedSecondInterval[0], ERROR));
-		assertThat(calculatedSecondInterval[1], closeTo(expectedSecondInterval[1], ERROR));
-		assertSelectivitiy(this.firstInterval, calculatedSecondInterval);
+
+		assertThat(calculatedIntervals[0][0], closeTo(expectedFirstInterval[0], ERROR));
+		assertThat(calculatedIntervals[0][1], closeTo(expectedFirstInterval[1], ERROR));
+		assertThat(calculatedIntervals[1][0], closeTo(expectedSecondInterval[0], ERROR));
+		assertThat(calculatedIntervals[1][1], closeTo(expectedSecondInterval[1], ERROR));
+		assertSelectivitiy(calculatedIntervals);
 	}
 
-	protected void assertSelectivitiy(double[] firstInterval, double[] secondInterval) {
-		assertThat(selectivity(firstInterval, secondInterval), closeTo(this.selectivity, ERROR));
+	@Test
+	public void testValidSelectivity() {
+		new SelectivityQueryGenerator(0.0);
+		new SelectivityQueryGenerator(1.0);
 	}
 
-	private double selectivity(double[] firstInterval, double[] secondInterval) {
-		return new Query(firstInterval[0], firstInterval[1], secondInterval[0], secondInterval[1]).getSelectivity();
+	@Test(expected = RuntimeException.class)
+	public void testInvalidSelectivity_below0() {
+		new SelectivityQueryGenerator(-0.01);
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void testInvalidSelectivity_above1() {
+		new SelectivityQueryGenerator(1.01);
+	}
+
+	protected void assertSelectivitiy(double[][] intervals) {
+		assertThat(selectivity(intervals), closeTo(this.selectivity, ERROR));
+	}
+
+	private double selectivity(double[][] intervals) {
+		return new Query(intervals[0][0], intervals[0][1], intervals[1][0], intervals[1][1])
+				.getSelectivity();
 	}
 }

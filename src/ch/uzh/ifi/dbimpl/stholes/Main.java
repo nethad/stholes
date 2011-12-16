@@ -15,6 +15,7 @@ public class Main {
 		// ((RandomQueryGenerator) queryGenerator).setSelectivity(0.25);
 
 		Database database = new DefaultDatabase("db/random");
+		// database.setTable("dataset_a")
 		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(MAX_NUMBER_OF_BUCKETS, database);
 
 		VisualizeSTHoles visualizeSTHoles = new VisualizeSTHoles();
@@ -43,7 +44,6 @@ public class Main {
 
 			error += Math.pow(Math.round(estimatedCount - actualResultCount), 2);
 
-			
 			System.out.println(query.toString() + "; estimated count: " + estimatedCount + ", actual count: "
 					+ actualResultCount);
 			stHolesAlgorithm.updateHistogram(query, actualResultCount);
@@ -55,7 +55,7 @@ public class Main {
 			System.out.print("Square Error = " + (error) / (i + 1));
 			System.out.print("\t\t| HistSize = " + stHolesAlgorithm.getRootBucket().getHistogramSize());
 			System.out.print("\t\t| total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate() + "\n");
-			
+
 		}
 	}
 }
