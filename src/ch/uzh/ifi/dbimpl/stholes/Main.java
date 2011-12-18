@@ -5,17 +5,17 @@ import ch.uzh.ifi.dbimpl.stholes.ui.VisualizeSTHoles;
 
 public class Main {
 
-	private static final int VISUALIZATION_INTERVAL = 10;
-	private static final int NUMBER_OF_QUERIES = 1000;
+	private static final int VISUALIZATION_INTERVAL = 1;
+	private static final int NUMBER_OF_QUERIES = 100;
 	private static final int MAX_NUMBER_OF_BUCKETS = 10;
+	private static final double QUERY_SELECTIVITY = 0.02; // 0 for random
 
 	public static void main(String[] args) {
-		QueryGenerator queryGenerator = new RandomQueryGenerator();
+		QueryGenerator queryGenerator = getQueryGenerator();
 
-		// ((RandomQueryGenerator) queryGenerator).setSelectivity(0.25);
+		Database database = new DefaultDatabase("db/import");
+		database.setTable("dataset_a"); // or _b, _c
 
-		Database database = new DefaultDatabase("db/random");
-		// database.setTable("dataset_a")
 		STHolesAlgorithm stHolesAlgorithm = new STHolesAlgorithm(MAX_NUMBER_OF_BUCKETS, database);
 
 		VisualizeSTHoles visualizeSTHoles = new VisualizeSTHoles();
@@ -56,6 +56,14 @@ public class Main {
 			System.out.print("\t\t| HistSize = " + stHolesAlgorithm.getRootBucket().getHistogramSize());
 			System.out.print("\t\t| total estimate = " + stHolesAlgorithm.getRootBucket().getTotalEstimate() + "\n");
 
+		}
+	}
+
+	private static QueryGenerator getQueryGenerator() {
+		if (QUERY_SELECTIVITY != 0D) {
+			return new SelectivityQueryGenerator(QUERY_SELECTIVITY);
+		} else {
+			return new RandomQueryGenerator();
 		}
 	}
 }

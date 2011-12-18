@@ -1,4 +1,5 @@
 package ch.uzh.ifi.dbimpl.stholes;
+
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.sql.Connection;
@@ -20,7 +21,7 @@ public class DefaultDatabase implements Database {
 	private static String PASSWORD = "";
 
 	private String dbFile = "testdb";
-	private static String TABLE_NAME = "test";
+	private String tableName = "test";
 
 	public DefaultDatabase() {
 		initialize();
@@ -37,9 +38,6 @@ public class DefaultDatabase implements Database {
 		try {
 			connection = DriverManager.getConnection("jdbc:hsqldb:file:"
 					+ dbFile + ";ifexists=true", USERNAME, PASSWORD);
-			selectStatement = connection
-					.prepareStatement("select count(*) from " + TABLE_NAME
-							+ " where x between ? and ? and y between ? and ?");
 		} catch (SQLException e) {
 			System.err.println("SQLException: " + e.getMessage());
 		}
@@ -66,7 +64,7 @@ public class DefaultDatabase implements Database {
 		ArrayList<Double> list = new ArrayList<Point2D.Double>();
 		try {
 			PreparedStatement selectStatement = connection
-					.prepareStatement("select x, y from " + TABLE_NAME);
+					.prepareStatement("select x, y from " + tableName);
 			ResultSet resultSet = selectStatement.executeQuery();
 			while (resultSet.next()) {
 				list.add(new Point2D.Double(resultSet.getDouble(1), resultSet
@@ -76,5 +74,21 @@ public class DefaultDatabase implements Database {
 			e.printStackTrace();
 		}
 		return list;
+	}
+
+	@Override
+	public void setTable(String tableName) {
+		this.tableName = tableName;
+		prepareSelectStatement();
+	}
+
+	protected void prepareSelectStatement() {
+		try {
+			selectStatement = connection
+					.prepareStatement("select count(*) from " + tableName
+							+ " where x between ? and ? and y between ? and ?");
+		} catch (SQLException e) {
+			System.err.println("SQLException: " + e.getMessage());
+		}
 	}
 }
