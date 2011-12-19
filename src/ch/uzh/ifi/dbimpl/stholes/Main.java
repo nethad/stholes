@@ -59,6 +59,7 @@ public class Main {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static QueryGenerator getQueryGenerator() {
 		if (QUERY_SELECTIVITY != 0D) {
 			return new SelectivityQueryGenerator(QUERY_SELECTIVITY);
