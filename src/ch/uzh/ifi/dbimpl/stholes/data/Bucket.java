@@ -16,6 +16,7 @@ public class Bucket {
 
 	// This factor is not included in the paper. The factor indicates with what factor the frequency was original multiplied.
 	// By only updating the frequency if the update factor is "better" (high) we can achieve a better result.
+	@SuppressWarnings("unused")
 	private double lastVFactor = 0;
 
 	private final Rectangle2D.Double box;
@@ -429,7 +430,7 @@ public class Bucket {
 							if (!bn.contains(i.box)) {
 								Rectangle2D.Double intersection = (Rectangle2D.Double) i.box.createIntersection(bn);
 								// :HACK: do not count very small overlaps (adjacent boxes) as intersection
-								if (intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE) {
+								if (!rectangleEquals(i.box, intersection) && intersection.getWidth() >= MIN_INTERSECTION_DISTANCE && intersection.getHeight() >= MIN_INTERSECTION_DISTANCE) {
 									// Update the rectangle to include the overlapping bucket;
 									Rectangle2D.Double.union(bn, i.box, bn);
 									intersectionFound = true; // Need to perform at least one additional run
